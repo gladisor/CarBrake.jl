@@ -1,0 +1,8 @@
+name = "CarBrake"
+uuid = "56dc9290-ff31-4b29-ab8a-497778b7a54c"
+authors = ["Tristan Shah <123.tristan.shah@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Dojo = "ac60b53e-8d92-4c83-b960-e78698fa1916"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
