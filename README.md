@@ -1,6 +1,8 @@
 # Project Milestone, Intelligent Autonomous Systems
 # Tristan Shah
 
+![alt text](https://github.com/gladisor/CarBrake.jl/blob/main/images/car.png)
+
 ## Introduction:
 In this project the overall objective has been formulated and some preliminary code modules have been written. There are still some remaining modules to be completed before experiments can be conducted. The following text will clarify the current project status.
 
