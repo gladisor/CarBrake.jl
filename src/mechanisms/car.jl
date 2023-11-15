@@ -52,14 +52,8 @@ function get_car()
         contact_constraint(br_wheel, Dojo.Z_AXIS, contact_radius = wheel_r, friction_coefficient = μ)
         ]
 
-    joints = [
-        body_joint, 
-        fl_wheel_joint, 
-        fr_wheel_joint,
-        bl_wheel_joint, 
-        br_wheel_joint
-        ]
-
+    joints = [body_joint, fl_wheel_joint, fr_wheel_joint, bl_wheel_joint, br_wheel_joint]
+    
     return Mechanism(origin, bodies, joints, contacts)
 end
 

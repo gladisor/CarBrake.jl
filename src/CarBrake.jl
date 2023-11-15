@@ -1,6 +1,7 @@
 module CarBrake
 
 using Dojo
-# include("mechanisms/car.jl")
+using ReinforcementLearning
+include("mechanisms/car.jl")
 
-end # module CarBrake
+end
