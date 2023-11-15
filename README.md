@@ -24,7 +24,7 @@ s = state(env)
 ```
 
 ## Action:
-Actions at this point in the project are represented by 5 discrete options. The car has the ability to move forward, backwards, turn left, turn right, and idle. An additional action will be added which applies a brake pad to the wheels to slow the car. Discrete actions are chosen for their implementation simplicity however it is possible to use continuous actions instead. 
+Actions at this point in the project are represented by 5 discrete options. The car has the ability to move forward, backwards, turn left, turn right, and idle. An additional action will be added which applies a brake pad to the wheels to slow the car. First the brake component must be added to each wheel and a spring must be attached to each pad in order for it to retract from the wheel when it is not being actuated. The action space is currently formulated as discrete however it is possible to use continuous actions instead.
 
 The action space can be sampled through:
 ```
