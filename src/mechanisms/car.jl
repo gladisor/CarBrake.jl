@@ -22,7 +22,7 @@ function get_car()
 
     bodies = [body, fl_wheel, fr_wheel, bl_wheel, br_wheel]
 
-    body_joint = JointConstraint(Dojo.Floating(origin, body))
+    body_joint = JointConstraint(Dojo.Floating(origin, body), name = :body_joint)
 
     wheel_x_offset = Dojo.X_AXIS * body_x / 2.0
     wheel_y_offset = Dojo.Y_AXIS * body_y / 2.0
@@ -61,11 +61,7 @@ function initialize_car!(mech::Mechanism)
     zero_coordinates!(mech)
     zero_velocities!(mech)
     x = Dojo.Z_AXIS * 1.0
-    set_maximal_configurations!(get_body(mech, :body), x = x)
-    set_maximal_configurations!(get_body(mech, :fl_wheel), x = x)
-    set_maximal_configurations!(get_body(mech, :fr_wheel), x = x)
-    set_maximal_configurations!(get_body(mech, :bl_wheel), x = x)
-    set_maximal_configurations!(get_body(mech, :br_wheel), x = x)
+    set_minimal_coordinates!(mech, get_joint(mech, :body_joint), vcat(x, zeros(3)))
 end
 
 car_forward() = vcat(zeros(Float64, 6), [1.0, 1.0, 1.0, 1.0])
