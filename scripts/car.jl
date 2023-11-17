@@ -1,6 +1,5 @@
 using Dojo, StaticArrays
 using CarBrake
-include("../src/mechanisms/car.jl")
 
 # PAD_COLOR = RGBA(249/255, 129/255, 191/255, 1.0)
 
@@ -78,16 +77,23 @@ include("../src/mechanisms/car.jl")
 #     return Mechanism(mech.origin, bodies, joints, contacts)
 # end
 
-function torque_mask(car::Mechanism)
+
+function get_torque_mask(car::Mechanism)
     u = zeros(input_dimension(car))
     u[[end-1, end]] .= 1
     return u
 end
 
-function steering_mask(car::Mechanism)
+function get_steering_mask(car::Mechanism)
     u = zeros(input_dimension(car))
     u[7] = 1
     return u
+end
+
+function get_control_mask(car::Mechanism)
+    τ = get_torque_mask(car)
+    θ = get_steering_mask(car)
+    return hcat(τ, θ)
 end
 
 car = get_car(μ = 0.6)
@@ -96,25 +102,10 @@ initialize_car!(car, 0.0, -7.0)
 K = 1000
 storage = Storage(K, length(car.bodies))
 
-drive_power = -0.3
-
-τ = torque_mask(car)
-θ = steering_mask(car)
+control_mask = get_control_mask(car)
 
 for k in 1:K
-
-    u = zeros(input_dimension(car))
-
-    if iseven(k ÷ 20)
-        u .+= -0.3 * θ
-    else
-        u .+= 0.3 * θ
-    end
-
-    if k > 30
-        u .+= τ * drive_power
-    end
-
+    u = control_mask * tanh.(randn(2))
     @time step!(car, get_maximal_state(car), u)
     Dojo.save_to_storage!(car, storage, k)
 end
