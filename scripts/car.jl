@@ -84,7 +84,7 @@ car = get_car(μ = 0.6)
 initialize_car!(car, 0.0, 0.0)
 # storage = simulate!(car, 5.0)
 
-K = 500
+K = 1000
 storage = Storage(K, length(car.bodies))
 
 drive_power = 0.5
@@ -94,12 +94,10 @@ for k in 1:K
 
     u = zeros(input_dimension(car))
 
-    if k in 5:15
-        u[7] = 0.05
-    end
+    u[7] = 0.5
 
-    if k > 20
-        u[8] = 0.1
+    if k > 30
+        u[end] = drive_power
     end
 
     @time step!(car, get_maximal_state(car), u)

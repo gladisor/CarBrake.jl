@@ -16,11 +16,11 @@ function get_car(;μ::Float64)
     wheel_h = 0.1
     wheel_m = pi * wheel_r^2 * wheel_h
 
-    # fl_wheel = Dojo.Cylinder(wheel_r, wheel_h, wheel_m, name = :fl_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
-    # fr_wheel = Dojo.Cylinder(wheel_r, wheel_h, wheel_m, name = :fr_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
-
     front_axel = Dojo.Sphere(0.10, 1.0, name = :front_axel)
     front_wheel = Dojo.Cylinder(wheel_r, wheel_h, wheel_m, name = :bl_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
+
+    fl_wheel = Dojo.Cylinder(wheel_r, wheel_h, wheel_m, name = :fl_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
+
     bl_wheel = Dojo.Cylinder(wheel_r, wheel_h, wheel_m, name = :bl_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
     br_wheel = Dojo.Cylinder(wheel_r, wheel_h, wheel_m, name = :br_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
 
@@ -28,7 +28,8 @@ function get_car(;μ::Float64)
         body, 
         front_axel,
         front_wheel,
-        # fl_wheel, fr_wheel, 
+
+        fl_wheel,
         bl_wheel, br_wheel
         ]
 
@@ -38,34 +39,31 @@ function get_car(;μ::Float64)
     wheel_y_offset = Dojo.Y_AXIS * body_y / 2.0
     wheel_z_offset = Dojo.Z_AXIS * body_z / 2.0
 
-    # fl_wheel_joint = JointConstraint(Dojo.Revolute(
-    #     body, fl_wheel, Dojo.X_AXIS, 
-    #     parent_vertex = wheel_x_offset .+ wheel_y_offset .- wheel_z_offset
-    #     ))
-    # fr_wheel_joint = JointConstraint(Dojo.Revolute(
-    #     body, fr_wheel, Dojo.X_AXIS, 
-    #     parent_vertex = -wheel_x_offset .+ wheel_y_offset .- wheel_z_offset
-    #     ))
-
-    # front_wheel_joint = JointConstraint(Dojo.Revolute(
-    #     body, front_wheel, Dojo.X_AXIS,
-    #     parent_vertex = wheel_y_offset .- wheel_z_offset
-    #     ))
-
+    θ = 0.45
     front_axel_joint = JointConstraint(Dojo.Revolute(
         body, front_axel, Dojo.Z_AXIS,
         parent_vertex = wheel_y_offset .- wheel_z_offset,
-        rot_joint_limits = [-0.5*sones(1), 0.5*sones(1)]
+        rot_joint_limits = [-θ*sones(1), θ*sones(1)]
     ))
 
     front_wheel_joint = JointConstraint(Dojo.Revolute(
         front_axel, front_wheel, Dojo.X_AXIS,
         ))
 
+    fl_wheel_joint = JointConstraint(Dojo.Spherical(
+        body, fl_wheel,
+        parent_vertex = wheel_x_offset .+ wheel_y_offset .- wheel_z_offset
+    ))
+
+    fl_wheel_lock = JointConstraint(Dojo.FixedOrientation(
+        front_wheel, fl_wheel,
+    ))
+
     bl_wheel_joint = JointConstraint(Dojo.Revolute(
         body, bl_wheel, Dojo.X_AXIS, 
         parent_vertex = wheel_x_offset .- wheel_y_offset .- wheel_z_offset
         ))
+
     br_wheel_joint = JointConstraint(Dojo.Revolute(
         body, br_wheel, Dojo.X_AXIS, 
         parent_vertex = -wheel_x_offset .- wheel_y_offset .- wheel_z_offset
@@ -75,19 +73,18 @@ function get_car(;μ::Float64)
         body_joint, 
         front_axel_joint,
         front_wheel_joint,
-        # fl_wheel_joint, fr_wheel_joint, 
+
+        fl_wheel_joint, fl_wheel_lock,
         bl_wheel_joint, br_wheel_joint
         ]
 
     contacts = [
         contact_constraint(front_wheel, Dojo.Z_AXIS, contact_radius = wheel_r, friction_coefficient = μ),
-        # contact_constraint(fl_wheel, Dojo.Z_AXIS, contact_radius = wheel_r, friction_coefficient = μ)
-        # contact_constraint(fr_wheel, Dojo.Z_AXIS, contact_radius = wheel_r, friction_coefficient = μ)
+        contact_constraint(fl_wheel, Dojo.Z_AXIS, contact_radius = wheel_r, friction_coefficient = μ),
         contact_constraint(bl_wheel, Dojo.Z_AXIS, contact_radius = wheel_r, friction_coefficient = μ),
         contact_constraint(br_wheel, Dojo.Z_AXIS, contact_radius = wheel_r, friction_coefficient = μ)
         ]
 
-    
     return Mechanism(origin, bodies, joints, contacts)
 end
 
