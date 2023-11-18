@@ -1,36 +1,73 @@
-# mutable struct CarEnv <: AbstractEnv
-#     mech::Mechanism
-#     control_mask::Matrix
-#     goal::Vector{Float64}
-#     step::Int
-#     max_step::Int
-# end
+export CarEnv
 
-# function CarEnv(goal = [10.0, 10.0], max_step = 100)
-#     mech = get_car()
-#     initialize_car!(mech)
-#     actions = CarBrake.car_actions()
-#     return CarEnv(mech, actions, goal, 0, max_step)
-# end
+mutable struct CarEnv <: AbstractEnv
+    car::Mechanism
+    control_low
+    control_high
+    control_to_input::Matrix{Float64}
+    step::Int
+    max_step::Int
+    storage::Storage
+end
 
-# RLBase.is_terminated(env::CarEnv) = env.step == env.max_step
-# RLBase.state(env::CarEnv) = get_minimal_state(env.mech)
-# RLBase.state_space(env::CarEnv) = state(env)
-# RLBase.action_space(env::CarEnv) = 1:size(env.actions, 2)
+function CarEnv(;
+        max_step::Int = 1000, 
+        control_low::Vector = -ones(2),
+        control_high::Vector = ones(2))
 
-# function RLBase.reset!(env::CarEnv)
-#     initialize_car!(env.mech)
-#     env.step = 0
-# end
+    car = get_car()
+    control_to_input = get_control_to_input(car)
+    storage = Storage(max_step, length(car.bodies))
 
-# function (env::CarEnv)(action::Int)
-#     u = env.actions[:, action]
-#     step!(env.mech, get_maximal_state(env.mech), u)
-#     env.step += 1
-# end
+    return CarEnv(
+        car, 
+        control_low, control_high, control_to_input, 
+        1, max_step, storage)
+end
 
-# function RLBase.reward(env::CarEnv)
-#     x = get_body(env.mech, :body).state.x2
-#     d = sqrt(sum((env.goal .- x[1:2]) .^ 2))
-#     return d
+function RLBase.reset!(env::CarEnv)
+    initialize_car!(env.car, 0.0, -7.0)
+    env.storage = Storage(length(env.storage), length(env.car.bodies))
+    env.step = 1
+end
+
+function RLBase.state(env::CarEnv)
+    return get_minimal_state(env.car)
+end
+
+function scale_control(env::CarEnv, u::Vector{Float64})
+    return (u .+ 1.0) ./ 2.0 .* (env.control_high .- env.control_low) .+ env.control_low
+end
+
+"""
+Expects a control signal: u ∈ R² ∈ [-1.0, 1.0] x [-1.0, 1.0]
+
+The first component is expected to be the torque to the back wheels
+and the second is the torque to the steering wheel.
+"""
+function (env::CarEnv)(u::Vector{Float64}; store::Bool = false)
+
+    input = env.control_to_input * scale_control(env, u)
+
+    step!(env.car, get_maximal_state(env.car), input)
+
+    if store
+        Dojo.save_to_storage!(env.car, env.storage, env.step)
+    end
+
+    env.step += 1
+end
+
+function RLBase.reward(env::CarEnv)
+    x = get_body(env.car, :body).state.x2
+    d = sqrt(sum(x[1:2] .^ 2))
+    return d
+end
+
+function RLBase.is_terminated(env::CarEnv)
+    return env.step == env.max_step + 1
+end
+
+# function RLBase.action_space(::CarEnv)
+#     return [ClosedInterval(-1.0, 1.0) for _ in 1:2]
 # end

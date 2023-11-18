@@ -1,4 +1,4 @@
-export get_car, initialize_car!
+export get_car, initialize_car!, get_control_to_input
 
 WHEEL_COLOR = RGBA(76/255, 184/255, 224/255, 1.0)
 BODY_COLOR = RGBA(76/255, 224/255, 141/255, 1.0)
@@ -101,6 +101,24 @@ end
 function initialize_car!(mech::Mechanism, x::Float64, y::Float64)
     zero_coordinates!(mech)
     zero_velocities!(mech)
-    X = Dojo.X_AXIS * x .+ Dojo.Y_AXIS * y .+ Dojo.Z_AXIS * 1.0
+    X = Dojo.X_AXIS * x .+ Dojo.Y_AXIS * y .+ Dojo.Z_AXIS * 0.5
     set_minimal_coordinates!(mech, get_joint(mech, :body_joint), vcat(X, zeros(3)))
+end
+
+function get_torque_mask(car::Mechanism)
+    u = zeros(input_dimension(car))
+    u[[end-1, end]] .= 1
+    return u
+end
+
+function get_steering_mask(car::Mechanism)
+    u = zeros(input_dimension(car))
+    u[7] = 1
+    return u
+end
+
+function get_control_to_input(car::Mechanism)
+    τ = get_torque_mask(car)
+    θ = get_steering_mask(car)
+    return hcat(τ, θ)
 end

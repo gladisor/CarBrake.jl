@@ -77,25 +77,6 @@ using CarBrake
 #     return Mechanism(mech.origin, bodies, joints, contacts)
 # end
 
-
-function get_torque_mask(car::Mechanism)
-    u = zeros(input_dimension(car))
-    u[[end-1, end]] .= 1
-    return u
-end
-
-function get_steering_mask(car::Mechanism)
-    u = zeros(input_dimension(car))
-    u[7] = 1
-    return u
-end
-
-function get_control_mask(car::Mechanism)
-    τ = get_torque_mask(car)
-    θ = get_steering_mask(car)
-    return hcat(τ, θ)
-end
-
 car = get_car(μ = 0.6)
 initialize_car!(car, 0.0, -7.0)
 

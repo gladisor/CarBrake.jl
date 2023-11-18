@@ -9,5 +9,6 @@ const FRICTION_PARAMETERIZATION = SA{Float64}[
     0.0  1.0]
 
 include("mechanisms/car.jl")
+# include("environments/car.jl")
 
 end
