@@ -2,8 +2,8 @@ export CarEnv
 
 mutable struct CarEnv <: AbstractEnv
     car::Mechanism
-    control_low
-    control_high
+    control_low::Vector{Float64}
+    control_high::Vector{Float64}
     control_to_input::Matrix{Float64}
     step::Int
     max_step::Int
@@ -61,13 +61,16 @@ end
 function RLBase.reward(env::CarEnv)
     x = get_body(env.car, :body).state.x2
     d = sqrt(sum(x[1:2] .^ 2))
-    return d
+    return -d
 end
 
 function RLBase.is_terminated(env::CarEnv)
     return env.step == env.max_step + 1
 end
 
-# function RLBase.action_space(::CarEnv)
-#     return [ClosedInterval(-1.0, 1.0) for _ in 1:2]
-# end
+function RLBase.action_space(env::CarEnv)
+    return Space(
+        [
+            ClosedInterval(l, h) for (l, h) in zip(env.control_low, env.control_high)
+        ])
+end
