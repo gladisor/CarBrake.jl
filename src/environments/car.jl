@@ -5,34 +5,55 @@ mutable struct CarEnv <: AbstractEnv
     control_low::Vector{Float64}
     control_high::Vector{Float64}
     control_to_input::Matrix{Float64}
+
+    goal::Vector{Float64}
     step::Int
     max_step::Int
     storage::Storage
 end
 
 function CarEnv(;
+        goal::Vector,
         max_step::Int = 1000, 
         control_low::Vector = -ones(2),
-        control_high::Vector = ones(2))
+        control_high::Vector = ones(2),
+        kwargs...)
 
-    car = get_car()
+    car = get_car(;kwargs...)
     control_to_input = get_control_to_input(car)
     storage = Storage(max_step, length(car.bodies))
 
     return CarEnv(
         car, 
         control_low, control_high, control_to_input, 
+        goal,
         1, max_step, storage)
 end
 
 function RLBase.reset!(env::CarEnv)
-    initialize_car!(env.car, 0.0, -7.0)
+    # x = rand(Uniform(-7.0, 7.0))
+    x = 0.0
+    # y = -7.0
+    y = rand(Uniform(-7.0, -5.0))
+    initialize_car!(env.car, x, y)
     env.storage = Storage(length(env.storage), length(env.car.bodies))
     env.step = 1
 end
 
 function RLBase.state(env::CarEnv)
-    return get_minimal_state(env.car)
+    body = get_body(env.car, :body)
+    front_axel = get_body(env.car, :front_axel)
+
+    return Vector{Float64}(vcat(
+        body.state.x2 ./ 10.0, 
+        body.state.v15, 
+        Dojo.vector(body.state.q2), 
+        body.state.ω15,
+        Dojo.vector(front_axel.state.q2),
+        front_axel.state.ω15,
+        env.step / env.max_step,
+        env.goal
+        ))
 end
 
 function scale_control(env::CarEnv, u::Vector{Float64})
@@ -58,11 +79,11 @@ function (env::CarEnv)(u::Vector{Float64}; store::Bool = false)
     env.step += 1
 end
 
-function RLBase.reward(env::CarEnv)
-    x = get_body(env.car, :body).state.x2
-    d = sqrt(sum(x[1:2] .^ 2))
-    return -d
-end
+# goal = [0.0, 7.0]
+# function RLBase.reward(env::CarEnv)
+#     body = get_body(env.car, :body)
+#     return - Flux.norm(body.state.x2[1:2] .- goal) / 100.0
+# end
 
 function RLBase.is_terminated(env::CarEnv)
     return env.step == env.max_step + 1
