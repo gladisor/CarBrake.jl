@@ -12,30 +12,38 @@ mutable struct CarEnv <: AbstractEnv
     storage::Storage
 end
 
+function reset_car(goal::Vector)
+    car = get_car()
+    car = add_goal(car, goal)
+    initialize_car!(
+        car,
+        rand(Uniform(-7.0, 7.0)), 
+        rand(Uniform(-7.0, 7.0))
+        )
+
+    return car
+end
+
 function CarEnv(;
         goal::Vector,
         max_step::Int = 1000, 
-        control_low::Vector = -ones(2),
-        control_high::Vector = ones(2),
-        kwargs...)
+        control_low::Vector,
+        control_high::Vector)
 
-    car = get_car(;kwargs...)
+    car = reset_car(goal)
     control_to_input = get_control_to_input(car)
     storage = Storage(max_step, length(car.bodies))
 
     return CarEnv(
         car, 
-        control_low, control_high, control_to_input, 
-        goal,
-        1, max_step, storage)
+        control_low, 
+        control_high, 
+        control_to_input, 
+        goal, 1, max_step, storage)
 end
 
 function RLBase.reset!(env::CarEnv)
-    # x = rand(Uniform(-7.0, 7.0))
-    x = 0.0
-    # y = -7.0
-    y = rand(Uniform(-7.0, -5.0))
-    initialize_car!(env.car, x, y)
+    env.car = reset_car(env.goal)
     env.storage = Storage(length(env.storage), length(env.car.bodies))
     env.step = 1
 end
@@ -79,19 +87,15 @@ function (env::CarEnv)(u::Vector{Float64}; store::Bool = false)
     env.step += 1
 end
 
-# goal = [0.0, 7.0]
-# function RLBase.reward(env::CarEnv)
-#     body = get_body(env.car, :body)
-#     return - Flux.norm(body.state.x2[1:2] .- goal) / 100.0
-# end
+function RLBase.reward(env::CarEnv)
+    body = get_body(env.car, :body)
+    return Flux.norm(body.state.x1[1:2] .- env.goal) .- Flux.norm(body.state.x2[1:2] .- env.goal)
+end
 
 function RLBase.is_terminated(env::CarEnv)
     return env.step == env.max_step + 1
 end
 
-function RLBase.action_space(env::CarEnv)
-    return Space(
-        [
-            ClosedInterval(l, h) for (l, h) in zip(env.control_low, env.control_high)
-        ])
+function RLBase.action_space(::CarEnv)
+    return Space([ClosedInterval(-1.0, 1.0) for i in 1:2])
 end

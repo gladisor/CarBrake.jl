@@ -3,7 +3,7 @@ export get_car, initialize_car!, get_control_to_input
 WHEEL_COLOR = RGBA(76/255, 184/255, 224/255, 1.0)
 BODY_COLOR = RGBA(76/255, 224/255, 141/255, 1.0)
 
-function get_car(;μ::Float64 = 0.6, axel_spring::Float64, axel_damper::Float64)
+function get_car(;μ::Float64 = 0.6, axel_spring::Float64 = 1.0, axel_damper::Float64 = 2.0)
     origin = Origin()
 
     body_x = 1.5
@@ -100,11 +100,26 @@ function get_car(;μ::Float64 = 0.6, axel_spring::Float64, axel_damper::Float64)
     return Mechanism(origin, bodies, joints, contacts)
 end
 
-function initialize_car!(mech::Mechanism, x::Float64, y::Float64)
+function add_goal(car::Mechanism, goal::Vector)
+    x, y, z = 1.0, 1.0, 2.0
+    goal_box = Dojo.Box(x, y, z, x*y*z, name = :goal_box, color = RGBA(0.0, 1.0, 0.0, 0.33))
+    bodies = [car.bodies; goal_box]
+    goal_joint = JointConstraint(Fixed(car.origin, goal_box, parent_vertex = [goal; z]), name = :goal_joint)
+    joints = [car.joints; goal_joint]
+    return Mechanism(car.origin, bodies, joints, car.contacts)
+end
+
+function initialize_car!(mech::Mechanism, x_car::Float64, y_car::Float64)
+        # , x_goal::Float64, y_goal::Float64)
     zero_coordinates!(mech)
     zero_velocities!(mech)
-    X = Dojo.X_AXIS * x .+ Dojo.Y_AXIS * y .+ Dojo.Z_AXIS * 0.5
-    set_minimal_coordinates!(mech, get_joint(mech, :body_joint), vcat(X, zeros(3)))
+
+    car_pos = Dojo.X_AXIS * x_car .+ Dojo.Y_AXIS * y_car .+ Dojo.Z_AXIS * 0.5
+    set_minimal_coordinates!(mech, get_joint(mech, :body_joint), vcat(car_pos, zeros(3)))
+
+    # goal_box = get_body(mech, :goal_box)
+    # goal_pos = Dojo.X_AXIS * x_goal .+ Dojo.Y_AXIS * y_goal .+ Dojo.Z_AXIS * goal_box.shape.xyz[3]
+    # set_minimal_coordinates!(mech, get_joint(mech, :goal_joint), vcat(goal_pos, zeros(3)))
 end
 
 function get_torque_mask(car::Mechanism)
