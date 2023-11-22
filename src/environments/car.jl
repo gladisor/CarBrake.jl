@@ -75,7 +75,11 @@ Expects a control signal: u ∈ R² ∈ [-1.0, 1.0] x [-1.0, 1.0]
 The first component is expected to be the torque to the back wheels
 and the second is the torque to the steering wheel.
 """
-function (env::CarEnv)(u::Vector{Float64}; store::Bool = false)
+function (env::CarEnv)(u::AbstractArray{Float64}; store::Bool = false)
+
+    if u isa SubArray
+        u = Vector{Float64}(u)
+    end
 
     input = env.control_to_input * scale_control(env, u)
 

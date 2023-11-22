@@ -3,7 +3,6 @@ using ReinforcementLearning
 using Flux
 using CairoMakie
 using CarBrake
-
 include("td3.jl")
 
 function RLBase.reward(env::CarEnv)
@@ -69,71 +68,6 @@ function RLBase.is_terminated(env::CarEnv)
     return !within_bounds(env) || (env.step == env.max_step + 1)
 end
 
-## control signal: u = [forward power, steering power]
-env = CarEnv(
-    max_step = 1000,
-    goal = [0.0, 3.0],
-    control_low = [-0.3, -1.0],
-    control_high = [0.3, 1.0])
-
-s_size = length(state(env))
-a_size = length(action_space(env))
-h_size = 128
-
-activation = relu
-build_actor() = Chain(
-    Dense(s_size, h_size, activation),
-    Dense(h_size, h_size, activation),
-    Dense(h_size, h_size, activation),
-    Dense(h_size, a_size, tanh))
-
-build_critic() = Chain(
-    Dense(s_size + a_size, h_size, activation),
-    Dense(h_size, h_size, activation),
-    Dense(h_size, h_size, activation),
-    Dense(h_size, h_size, activation),
-    Dense(h_size, h_size, activation),
-    Dense(h_size, 1))
-
-# actor = NeuralNetworkApproximator(build_actor(), Adam(1e-4))
-# critic = NeuralNetworkApproximator(build_critic(), Adam(1e-3))
-
-# ddpg = DDPGPolicy(
-#     behavior_actor = actor,
-#     behavior_critic = critic,
-#     target_actor = deepcopy(actor),
-#     target_critic = deepcopy(critic),
-#     start_policy = RandomPolicy(action_space(env)),
-#     na = a_size,
-#     act_noise = 1.0,
-#     γ = 0.99f0,
-#     ρ = 0.999f0,
-#     batch_size = 64
-#     )
-# hook = TotalRewardPerEpisode()
-
-STEPS = env.max_step
-EPISODES = 2000
-
-# traj = CircularArraySARTTrajectory(
-#     capacity = 1000000,
-#     state = Vector{Float64} => size(state(env)),
-#     action = Vector{Float64} => size(action_space(env)))
-
-agent = Agent(ddpg, traj)
-run(agent, env, StopAfterEpisode(EPISODES), hook)
-
-fig = Figure()
-ax = Axis(fig[1, 1])
-lines!(ax, hook.rewards)
-save("rewards.png", fig)
-
-# reset!(env)
-# while !is_terminated(env)
-#     @time env(agent.policy.behavior_actor(state(env)), store = true)
-# end
-
-# vis = Visualizer()
-# open(vis)
-# visualize(env.car, env.storage, vis = vis)
-
+function RLBase.state_space(env::CarEnv)
+    return Space(state(env))
+end
