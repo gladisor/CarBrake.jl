@@ -3,13 +3,13 @@ export get_car, initialize_car!, get_control_to_input
 WHEEL_COLOR = RGBA(76/255, 184/255, 224/255, 1.0)
 BODY_COLOR = RGBA(76/255, 224/255, 141/255, 1.0)
 
-function get_car(;μ::Float64 = 0.6, axel_spring::Float64 = 1.0, axel_damper::Float64 = 2.0)
+function get_car(;μ::Float64 = 0.8, axel_spring::Float64 = 1.0, axel_damper::Float64 = 2.0)
     origin = Origin()
 
     body_x = 1.5
     body_y = 2.0
     body_z = 0.25
-    body_m = body_x * body_y * body_z
+    body_m = body_x*body_y*body_z
     body = Dojo.Box(body_x, body_y, body_z, body_m, name = :body, color = BODY_COLOR)
 
     wheel_r = 0.3
@@ -17,7 +17,7 @@ function get_car(;μ::Float64 = 0.6, axel_spring::Float64 = 1.0, axel_damper::Fl
     wheel_m = pi * wheel_r^2 * wheel_h
 
     front_axel = Dojo.Sphere(0.10, 0.10, name = :front_axel)
-    front_wheel = Dojo.Cylinder(0.10, wheel_h, 0.10, name = :bl_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
+    front_wheel = Dojo.Cylinder(0.10, wheel_h, 0.10, name = :front_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
 
     fl_wheel = Dojo.Cylinder(wheel_r, wheel_h, wheel_m, name = :fl_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
     fr_wheel = Dojo.Cylinder(wheel_r, wheel_h, wheel_m, name = :fr_wheel, orientation_offset = Dojo.RotY(pi/2), color = WHEEL_COLOR)
@@ -46,8 +46,8 @@ function get_car(;μ::Float64 = 0.6, axel_spring::Float64 = 1.0, axel_damper::Fl
         parent_vertex = wheel_y_offset .- wheel_z_offset,
         rot_joint_limits = [-θ*sones(1), θ*sones(1)],
         spring = axel_spring,
-        damper = axel_damper
-        ))
+        damper = axel_damper),
+        name = :front_axel_joint)
 
     front_wheel_joint = JointConstraint(Dojo.Revolute(front_axel, front_wheel, Dojo.X_AXIS))
 
@@ -104,7 +104,7 @@ function add_goal(car::Mechanism, goal::Vector)
     x, y, z = 1.0, 1.0, 2.0
     goal_box = Dojo.Box(x, y, z, x*y*z, name = :goal_box, color = RGBA(0.0, 1.0, 0.0, 0.33))
     bodies = [car.bodies; goal_box]
-    goal_joint = JointConstraint(Fixed(car.origin, goal_box, parent_vertex = [goal; z]), name = :goal_joint)
+    goal_joint = JointConstraint(Fixed(car.origin, goal_box, parent_vertex = [goal; z/2.0]), name = :goal_joint)
     joints = [car.joints; goal_joint]
     return Mechanism(car.origin, bodies, joints, car.contacts)
 end
