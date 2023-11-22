@@ -128,12 +128,12 @@ ax = Axis(fig[1, 1])
 lines!(ax, hook.rewards)
 save("rewards.png", fig)
 
-reset!(env)
-while !is_terminated(env)
-    @time env(agent.policy.behavior_actor(state(env)), store = true)
-end
+# reset!(env)
+# while !is_terminated(env)
+#     @time env(agent.policy.behavior_actor(state(env)), store = true)
+# end
 
-vis = Visualizer()
-open(vis)
-visualize(env.car, env.storage, vis = vis)
+# vis = Visualizer()
+# open(vis)
+# visualize(env.car, env.storage, vis = vis)
 
