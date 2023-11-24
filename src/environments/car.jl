@@ -92,13 +92,32 @@ function (env::CarEnv)(u::AbstractArray{Float64}; store::Bool = false)
     env.step += 1
 end
 
+BOUNDS = 8.0
+function within_bounds(env::CarEnv)
+    body = get_body(env.car, :body)
+    x = body.state.x2[1]
+    y = body.state.x2[2]
+    return (-BOUNDS < x < BOUNDS) && (-BOUNDS < y < BOUNDS)
+end
+
+PENALTY = -1.0
 function RLBase.reward(env::CarEnv)
     body = get_body(env.car, :body)
-    return Flux.norm(body.state.x1[1:2] .- env.goal) .- Flux.norm(body.state.x2[1:2] .- env.goal)
+    r = Flux.norm(body.state.x1[1:2] .- env.goal) .- Flux.norm(body.state.x2[1:2] .- env.goal)
+
+    if !within_bounds(env)
+        r += PENALTY
+    end
+
+    return r
 end
 
 function RLBase.is_terminated(env::CarEnv)
-    return env.step == env.max_step + 1
+    return !within_bounds(env) || (env.step == env.max_step + 1)
+end
+
+function RLBase.state_space(env::CarEnv)
+    return Space(state(env))
 end
 
 function RLBase.action_space(::CarEnv)

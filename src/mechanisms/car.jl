@@ -3,7 +3,13 @@ export get_car, initialize_car!, get_control_to_input
 WHEEL_COLOR = RGBA(76/255, 184/255, 224/255, 1.0)
 BODY_COLOR = RGBA(76/255, 224/255, 141/255, 1.0)
 
-function get_car(;μ::Float64 = 0.8, axel_spring::Float64 = 1.0, axel_damper::Float64 = 2.0)
+function get_car(;
+        μ::Float64 = 0.8, 
+        # axel_spring::Float64 = 1.0, 
+        # axel_damper::Float64 = 2.0
+        axel_spring::Float64 = 0.0, 
+        axel_damper::Float64 = 0.0
+        )
     origin = Origin()
 
     body_x = 1.5
@@ -41,6 +47,7 @@ function get_car(;μ::Float64 = 0.8, axel_spring::Float64 = 1.0, axel_damper::Fl
     wheel_z_offset = Dojo.Z_AXIS * body_z / 2.0
 
     θ = 0.60 ## max turning angle?
+    # θ = 0.45
     front_axel_joint = JointConstraint(Dojo.Revolute(
         body, front_axel, Dojo.Z_AXIS,
         parent_vertex = wheel_y_offset .- wheel_z_offset,
