@@ -4,8 +4,8 @@ using Flux: Optimiser
 using Distributions
 
 using Dojo
-# Flux.device!(2)
 using CairoMakie
+using BSON
 using CarBrake
 include("rl.jl")
 
@@ -126,16 +126,16 @@ s_size = length(state(env))
 a_size = length(action_space(env))
 h_size = 128
 
-# ppo = PPO(
-#     actor = Actor(s_size, h_size, a_size),
-#     critic = Value(s_size, h_size),
-#     actor_opt = Adam(0.00005f0),
-#     critic_opt = Adam(0.0003f0),
-#     γ = 0.99f0,
-#     ρ = 0.995f0)
-# actor_ps = Flux.params(ppo.actor)
-# critic_ps = Flux.params(ppo.critic)
-# hook = TotalRewardPerEpisode()
+ppo = PPO(
+    actor = Actor(s_size, h_size, a_size),
+    critic = Value(s_size, h_size),
+    actor_opt = Adam(0.00005f0),
+    critic_opt = Adam(0.0003f0),
+    γ = 0.99f0,
+    ρ = 0.995f0)
+actor_ps = Flux.params(ppo.actor)
+critic_ps = Flux.params(ppo.critic)
+hook = TotalRewardPerEpisode()
 
 γ = ppo.γ
 ϵ = 0.1f0
@@ -145,7 +145,7 @@ epochs = 5
 actor_loss = Float64[]
 critic_loss = Float64[]
 
-for iteration ∈ 1:10
+for iteration ∈ 1:100
 
     agent = Agent(policy = ppo, trajectory = build_buffer(env, episodes))
     run(agent, env, StopAfterEpisode(episodes), hook)
@@ -175,15 +175,15 @@ for iteration ∈ 1:10
 
                 _, μ, σ = ppo.actor(s)
                 p_a = prod(pdf.(Normal.(μ, σ), a), dims = 1) |> vec
-                ratio = p_a ./ old_p_a
+                p_a = ifelse.(isnan.(p_a), 0.0f0, p_a)
+                ratio = (p_a .+ 1f-10) ./ (old_p_a .+ 1f-10)
+                # ratio = ifelse.(isnan.(ratio), 0.0f0, ratio)
 
                 δ = r .+ γ * vec(ppo.target_critic(s′)) .- vec(ppo.critic(s))
-
-                δ = (δ .- mean(δ)) ./ std(δ)
+                δ = (δ .- mean(δ)) ./ (std(δ) .+ 1f-10)
 
                 policy_loss = -mean(min.(ratio .* δ, clamp.(ratio, 1.0f0 - ϵ, 1.0f0 + ϵ) .* δ))
-                entropy = -mean(p_a .* log.(p_a))
-
+                entropy = -mean(p_a .* log.(p_a .+ 1f-10))
                 loss = policy_loss - entropy * 0.01
 
                 Flux.ignore() do 
@@ -211,7 +211,7 @@ for iteration ∈ 1:10
     lines!(ax1, actor_loss)
     lines!(ax2, critic_loss)
     lines!(ax3, hook.rewards)
-    save("ppo.png", fig)
+    save("ppo_variable_spawn_no_entropy.png", fig)
 end
 
 reset!(env)

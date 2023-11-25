@@ -8,19 +8,11 @@ env = CarEnv(
     control_high = [0.2, 0.1]
     )
 
-# u = [1.0, -1.0]
-# input = env.control_to_input * CarBrake.scale_control(env, u)
-
-# display(maximum(input))
-# display(minimum(input))
-
 policy = RandomPolicy(action_space(env))
 
 reset!(env)
 while !is_terminated(env)
-    steer = sin(4pi*env.step / env.max_step)
-    display(steer)
-    @time env([-1.0, steer], store = true)
+    @time env(policy(env), store = true)
 end
 
 vis = Visualizer()

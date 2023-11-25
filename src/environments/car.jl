@@ -18,8 +18,9 @@ function reset_car(goal::Vector)
     initialize_car!(
         car,
         # rand(Uniform(-7.0, 7.0)), 
-        # rand(Uniform(-7.0, 7.0))
-        0.0, -7.0
+        rand(Uniform(-7.0, 7.0)),
+        # 0.0, 
+        -7.0
         )
 
     return car
