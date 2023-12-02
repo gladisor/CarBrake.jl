@@ -111,7 +111,7 @@ function add_goal(car::Mechanism, goal::Vector)
     x, y, z = 1.0, 1.0, 2.0
     goal_box = Dojo.Box(x, y, z, x*y*z, name = :goal_box, color = RGBA(0.0, 1.0, 0.0, 0.33))
     bodies = [car.bodies; goal_box]
-    goal_joint = JointConstraint(Fixed(car.origin, goal_box, parent_vertex = [goal; z/2.0]), name = :goal_joint)
+    goal_joint = JointConstraint(Dojo.Fixed(car.origin, goal_box, parent_vertex = [goal; z/2.0]), name = :goal_joint)
     joints = [car.joints; goal_joint]
     return Mechanism(car.origin, bodies, joints, car.contacts)
 end

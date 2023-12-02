@@ -17,9 +17,7 @@ function reset_car(goal::Vector)
     car = add_goal(car, goal)
     initialize_car!(
         car,
-        # rand(Uniform(-7.0, 7.0)), 
         rand(Uniform(-7.0, 7.0)),
-        # 0.0, 
         -7.0
         )
 
@@ -29,8 +27,8 @@ end
 function CarEnv(;
         goal::Vector,
         max_step::Int = 1000, 
-        control_low::Vector,
-        control_high::Vector)
+        control_low::Vector = [-0.2, -0.1],
+        control_high::Vector = [0.2, 0.1])
 
     car = reset_car(goal)
     control_to_input = get_control_to_input(car)
@@ -53,16 +51,16 @@ end
 function RLBase.state(env::CarEnv)
     body = get_body(env.car, :body)
     front_axel = get_body(env.car, :front_axel)
+    t = env.step / env.max_step
 
     return Vector{Float64}(vcat(
-        body.state.x2 ./ 10.0, 
-        body.state.v15, 
-        Dojo.vector(body.state.q2), 
+        body.state.x2[1:2] ./ 10.0,    ## only care about position in xy
+        body.state.v15[1:2],   ## only care about velocity in xy
+        Dojo.vector(body.state.q2),
         body.state.ω15,
         Dojo.vector(front_axel.state.q2),
-        front_axel.state.ω15,
-        env.step / env.max_step,
-        env.goal
+        front_axel.state.ω15,    ## how fast is the steering wheel turning
+        t
         ))
 end
 

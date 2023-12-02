@@ -6,6 +6,8 @@ using ReinforcementLearning
 using IntervalSets
 using Flux
 using Distributions
+using BSON
+using CairoMakie
 
 const FRICTION_PARAMETERIZATION = SA{Float64}[
     1.0  0.0
@@ -13,5 +15,6 @@ const FRICTION_PARAMETERIZATION = SA{Float64}[
 
 include("mechanisms/car.jl")
 include("environments/car.jl")
+include("ppo.jl")
 
 end
